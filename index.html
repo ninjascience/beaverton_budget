@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js?1.22.0"></script>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.layout.js?1.22.0"></script>
+    <script type="text/javascript" src="readme.js"></script>
+    <style type="text/css">
+
+.node {
+  font: 10px sans-serif;
+}
+
+.link {
+  stroke: steelblue;
+  stroke-opacity: .4;
+  fill: none;
+}
+
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+
+var cluster = d3.layout.cluster()
+    .size([360, 960 / 2 - 120])
+    .sort(null)
+    .value(function(d) { return d.size; });
+
+var bundle = d3.layout.bundle();
+
+var line = d3.svg.line.radial()
+    .interpolate("bundle")
+    .tension(.85)
+    .radius(function(d) { return d.y; })
+    .angle(function(d) { return d.x / 180 * Math.PI; });
+
+var vis = d3.select("body").append("svg:svg")
+    .attr("width", 960)
+    .attr("height", 960)
+  .append("svg:g")
+    .attr("transform", "translate(480,480)");
+
+d3.json("readme.json", function(classes) {
+  var nodes = cluster(packages.root(classes)),
+      links = packages.imports(nodes);
+
+  vis.selectAll("path.link")
+      .data(bundle(links))
+    .enter().append("svg:path")
+      .attr("class", "link")
+      .attr("d", line);
+
+  vis.selectAll("g.node")
+      .data(nodes.filter(function(n) { return !n.children; }))
+    .enter().append("svg:g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+    .append("svg:text")
+      .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
+      .attr("dy", ".31em")
+      .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+      .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
+      .text(function(d) { return d.data.key; });
+});
+
+d3.select(self.frameElement).style("height", "960px");
+
+    </script>
+  </body>
+</html>
